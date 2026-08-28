@@ -245,6 +245,12 @@ class Handler(SimpleHTTPRequestHandler):
             page = (q.get("page") or [""])[0]
             A = ROOT / "_edit" / "audience.json"
             T = ROOT / "_edit" / "tags.json"
+            # A published store carries pages and a runtime, not the registries.
+            # Saying "editable" here switches the browser's editing layer on with
+            # nothing behind it, and every card then reports itself private —
+            # which reads as a store that lost its audiences.
+            if not (A.exists() and T.exists()):
+                return self._json({"ok": False, "editable": False, "reason": "published store"})
             aud = json.loads(A.read_text(encoding="utf-8")) if A.exists() else {"groups": {}, "pages": {}}
             tg = json.loads(T.read_text(encoding="utf-8")) if T.exists() else {"labels": {}, "pages": {}}
             group = aud.get("pages", {}).get(page, "private")
