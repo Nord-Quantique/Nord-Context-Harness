@@ -44,8 +44,9 @@ Switch to My Changes       ← what you edited, kept intact
 
 ### The machine content is written on
 
-A store carries the reading runtime only. A copy that also has the authoring
-layer (`_edit/shim.js`) is where content is *made*, and parking its work on a
+A store carries its pages and the nav and trace generated for it; the runtime
+lives in the harness. A copy that is a working bundle rather than a store is
+where content is *made*, and parking its work on a
 branch or resetting it to the published copy would be reaching into someone's
 desk. Such a copy is reported on and never modified — the sync is read-only
 there.
@@ -66,7 +67,7 @@ _edit/stamps.json        local page dates
 
 ## What it does otherwise
 
-On launch it starts `python3 _edit/server.py --port 8137 --reader` with the store as its
+On launch it starts `runtime/server.py --store <store> --port 8137 --reader` with the store as its
 working directory, waits for the port to answer, and opens the index. Clicking
 the Dock icon reopens the site — the app shows no window of its own, so without
 that a click would appear to do nothing.

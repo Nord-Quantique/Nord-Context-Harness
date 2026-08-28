@@ -14,41 +14,6 @@ out which context stores your account can reach, clones them into
 The stores are private. Access is decided by GitHub organisation membership, so
 if the installer finds none, your account has not been added yet.
 
-## Two builds, one source
-
-The launcher is built in one of two modes. The mode is fixed at compile time, so
-an installed app is one thing and cannot be switched at runtime.
-
-| | reader | admin |
-|---|---|---|
-| who runs it | anyone at Nord | whoever authors the context |
-| store | a published store, cloned from GitHub | a local working bundle |
-| port | 8137 | 8136 |
-| writes | comments, and pages made locally | everything |
-| app | `Nord Context.app` | `Nord Context Admin.app` |
-| bundle id | `ca.nordquantique.context` | `…context.admin` |
-
-Different bundle identifiers, pidfiles and logs, so both can be installed and
-running at once without contending for a port or a menu bar item.
-
-**Reader** — defined by `install.sh`, the one-liner at the top of this file. It
-passes no mode, and `reader` is the default.
-
-**Admin** — defined by `app/install-admin.sh`. There is nothing to clone, so it
-names the store instead of discovering it:
-
-```bash
-cd <your working bundle> && bash app/install-admin.sh
-# or
-bash app/install-admin.sh /path/to/working/bundle
-```
-
-Underneath both is one script:
-
-```bash
-app/build.sh <store-dir> [runtime-dir] [reader|admin]
-```
-
 ## What you need
 
 macOS, `git`, `python3`, and the Swift toolchain (`xcode-select --install`). The
@@ -73,3 +38,8 @@ Press <kbd>⌘K</kbd> on any page and click a block to leave a comment.
 ```bash
 HARNESS_DIR=~/somewhere APP_DIR=~/Applications bash install.sh
 ```
+
+---
+
+Authoring the content is a different job, with its own install. If that is you,
+see [ADMIN.md](ADMIN.md).
