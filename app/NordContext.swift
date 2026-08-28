@@ -46,9 +46,15 @@ enum Runtime {
 /// 8137 is the reader port. The admin server — the working bundle, where documents
 /// are actually authored — defaults to 8136, so the two never contend for one port
 /// and the port itself says which server answered.
+/// Reader serves a published store read-only; admin serves the working bundle,
+/// where documents are authored. Fixed at build time so one installed app is one
+/// mode — two apps can sit side by side without arguing over a port or a menu.
+let IS_READER = COMPILED_IS_READER
+
+/// The port names the mode: 8137 reader, 8136 admin. They never contend.
 var PORT: Int {
     let n = UserDefaults.standard.integer(forKey: "port")
-    return n > 0 ? n : 8137
+    return n > 0 ? n : (IS_READER ? 8137 : 8136)
 }
 var siteURL: URL { URL(string: "http://localhost:\(PORT)/index.html")! }
 
@@ -233,12 +239,15 @@ final class Server {
         p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         // The app is what a reader loads, so it starts the server in reader mode:
         // comments and zoom, nothing else. Authoring runs the server from a terminal.
-        p.arguments = ["python3", (Runtime.path as NSString).appendingPathComponent("server.py"),
-                       "--store", Repo.path, "--port", "\(PORT)", "--reader"]
+        var argv = ["python3", (Runtime.path as NSString).appendingPathComponent("server.py"),
+                    "--store", Repo.path, "--port", "\(PORT)"]
+        if IS_READER { argv.append("--reader") }
+        p.arguments = argv
         p.currentDirectoryURL = URL(fileURLWithPath: Repo.path)
 
         let logURL = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("nord-context-server.log")
+            .appendingPathComponent(IS_READER ? "nord-context-server.log"
+                                  : "nord-context-admin-server.log")
         FileManager.default.createFile(atPath: logURL.path, contents: nil)
         if let h = try? FileHandle(forWritingTo: logURL) {
             p.standardOutput = h
@@ -258,7 +267,9 @@ final class Server {
     }
 
     private var pidFile: URL {
-        URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("nord-context-server.pid")
+        URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent(IS_READER ? "nord-context-server.pid"
+                                              : "nord-context-admin-server.pid")
     }
 
     private func recordPID(_ pid: Int32) {
@@ -470,7 +481,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let head = NSMenuItem(title: "Nord Context", action: nil, keyEquivalent: "")
         head.attributedTitle = NSAttributedString(
-            string: "Nord Context",
+            string: IS_READER ? "Nord Context" : "Nord Context — Admin",
             attributes: [.font: NSFont.boldSystemFont(ofSize: NSFont.systemFontSize)])
         m.addItem(head)
 
@@ -584,7 +595,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func openLog() {
         let p = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("nord-context-server.log")
+            .appendingPathComponent(IS_READER ? "nord-context-server.log"
+                                  : "nord-context-admin-server.log")
         NSWorkspace.shared.open(p)
     }
 

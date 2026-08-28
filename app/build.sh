@@ -12,13 +12,21 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 #   build.sh <store-dir> [runtime-dir]
 REPO="${1:-}"
 RUNTIME="${2:-$(cd "$HERE/../runtime" 2>/dev/null && pwd)}"
+MODE="${3:-reader}"
 if [ -z "$REPO" ]; then
-  echo "usage: build.sh <store-dir> [runtime-dir]" >&2
+  echo "usage: build.sh <store-dir> [runtime-dir] [reader|admin]" >&2
   exit 1
 fi
+case "$MODE" in
+  reader) NAME="Nord Context";       BUNDLE_ID="ca.nordquantique.context";       IS_READER="true"  ;;
+  admin)  NAME="Nord Context Admin"; BUNDLE_ID="ca.nordquantique.context.admin"; IS_READER="false" ;;
+  *) echo "error: mode must be reader or admin, not $MODE" >&2; exit 1 ;;
+esac
 REPO="$(cd "$REPO" && pwd)"
-OUT="$HERE/build"
-APP="$OUT/Nord Context.app"
+# Two modes, two apps: a distinct bundle id keeps their preferences and menu bar
+# items apart, so an admin build and a reader build coexist without interfering.
+OUT="$HERE/build/$MODE"
+APP="$OUT/$NAME.app"
 
 if [ ! -f "$REPO/index.html" ]; then
   echo "error: $REPO has no index.html — is that a context store?" >&2
@@ -34,12 +42,13 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 # the one value that has to be known at compile time
 SRC="$OUT/NordContext.gen.swift"
-python3 - "$HERE/NordContext.swift" "$SRC" "$REPO" "$RUNTIME" <<'PY'
+python3 - "$HERE/NordContext.swift" "$SRC" "$REPO" "$RUNTIME" "$IS_READER" <<'PY'
 import sys, json
-src, dst, repo, runtime = sys.argv[1:5]
+src, dst, repo, runtime, is_reader = sys.argv[1:6]
 s = open(src, encoding="utf-8").read()
 s = s.replace("COMPILED_REPO_PATH", json.dumps(repo), 1)
 s = s.replace("COMPILED_RUNTIME_PATH", json.dumps(runtime), 1)
+s = s.replace("COMPILED_IS_READER", is_reader, 1)
 open(dst, "w", encoding="utf-8").write(s)
 PY
 
@@ -68,9 +77,9 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>Nord Context</string>
-  <key>CFBundleDisplayName</key><string>Nord Context</string>
-  <key>CFBundleIdentifier</key><string>ca.nordquantique.context</string>
+  <key>CFBundleName</key><string>$NAME</string>
+  <key>CFBundleDisplayName</key><string>$NAME</string>
+  <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
   <key>CFBundleExecutable</key><string>NordContext</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>1.0</string>
