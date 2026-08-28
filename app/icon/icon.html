@@ -1,0 +1,29 @@
+<!doctype html><meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;background:transparent}
+  .c{width:1024px;height:1024px;display:flex;align-items:center;justify-content:center}
+  svg{display:block}
+</style>
+<div class="c">
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f6fd0"/><stop offset="1" stop-color="#17457f"/>
+    </linearGradient>
+  </defs>
+  <rect x="72" y="72" width="880" height="880" rx="196" fill="url(#g)"/>
+  <!-- three stacked pages: the bundle -->
+  <g fill="none" stroke="#ffffff" stroke-width="30" stroke-linejoin="round">
+    <rect x="286" y="250" width="452" height="150" rx="34" opacity=".45"/>
+    <rect x="286" y="437" width="452" height="150" rx="34" opacity=".72"/>
+    <rect x="286" y="624" width="452" height="150" rx="34"/>
+  </g>
+  <!-- the link that runs through them -->
+  <g fill="none" stroke="#8fc2ff" stroke-width="26" stroke-linecap="round">
+    <path d="M243 325 H206 a56 56 0 0 0 -56 56 V643 a56 56 0 0 0 56 56 h37"/>
+  </g>
+  <circle cx="243" cy="325" r="30" fill="#8fc2ff"/>
+  <circle cx="243" cy="512" r="30" fill="#8fc2ff"/>
+  <circle cx="243" cy="699" r="30" fill="#8fc2ff"/>
+</svg>
+</div>

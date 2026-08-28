@@ -23,6 +23,7 @@ HARNESS_DIR="${HARNESS_DIR:-$HOME/Nord-Harness}"
 APP_DIR="${APP_DIR:-$HOME/Applications}"
 APP_NAME="Nord Context.app"
 ORG="Nord-Quantique"
+HARNESS_REPO="Nord-Context-Harness"     # the app and the runtime, one copy for everyone
 
 # least privileged first; the last one you can reach is the one that opens
 STORES=("Nord-Context" "Nord-Context-Leadership")
@@ -109,14 +110,30 @@ done
 # the most privileged store you hold is the last reachable one
 STORE="${reachable[${#reachable[@]}-1]}"
 STORE_DIR="$HARNESS_DIR/$STORE"
-[ -f "$STORE_DIR/_edit/server.py" ] || die "$STORE_DIR does not look like a context store"
+[ -f "$STORE_DIR/index.html" ] || die "$STORE_DIR does not look like a context store"
+
+# ---------------------------------------------------------------- the harness
+# The app and the runtime are the same for everyone, so they come from here rather
+# than being duplicated into every store.
+step "Fetching the app and runtime"
+H_DIR="$HARNESS_DIR/$HARNESS_REPO"
+if [ -d "$H_DIR/.git" ]; then
+  git -C "$H_DIR" fetch --quiet origin 2>/dev/null && \
+    git -C "$H_DIR" merge --ff-only '@{u}' --quiet 2>/dev/null
+  say "$HARNESS_REPO — updated"
+else
+  gh repo clone "$ORG/$HARNESS_REPO" "$H_DIR" -- --quiet 2>/dev/null \
+    || die "could not clone $HARNESS_REPO"
+  say "$HARNESS_REPO — cloned"
+fi
+[ -f "$H_DIR/runtime/server.py" ] || die "$HARNESS_REPO has no runtime/server.py"
+[ -f "$H_DIR/app/build.sh" ]      || die "$HARNESS_REPO has no app/build.sh"
 
 # ---------------------------------------------------------------- build and install
 step "Building the reader"
-[ -f "$STORE_DIR/app/build.sh" ] || die "$STORE has no app/build.sh — it may predate the reader"
-bash "$STORE_DIR/app/build.sh" >/dev/null 2>&1 \
-  || die "build failed — run: bash $STORE_DIR/app/build.sh"
-say "built from $STORE"
+bash "$H_DIR/app/build.sh" "$STORE_DIR" "$H_DIR/runtime" >/dev/null 2>&1 \
+  || die "build failed — run: bash $H_DIR/app/build.sh $STORE_DIR $H_DIR/runtime"
+say "built against $STORE"
 
 mkdir -p "$APP_DIR"
 if [ -d "$APP_DIR/$APP_NAME" ]; then
@@ -124,7 +141,7 @@ if [ -d "$APP_DIR/$APP_NAME" ]; then
   sleep 1
   rm -rf "$APP_DIR/$APP_NAME"
 fi
-cp -R "$STORE_DIR/app/build/$APP_NAME" "$APP_DIR/" || die "could not install the app"
+cp -R "$H_DIR/app/build/$APP_NAME" "$APP_DIR/" || die "could not install the app"
 say "installed to $APP_DIR/$APP_NAME"
 
 # ---------------------------------------------------------------- go
@@ -133,5 +150,6 @@ open "$APP_DIR/$APP_NAME"
 printf "\n"
 say "Reading      $STORE"
 say "Stores       $HARNESS_DIR"
+say "App+runtime  $H_DIR"
 say "In a browser http://localhost:8137/   (the reader port)"
 printf "\n    %sIt is in the menu bar. Press ⌘K on any page to leave a comment.%s\n\n" "$dim" "$off"
