@@ -23,6 +23,9 @@ case "$MODE" in
   *) echo "error: mode must be reader or admin, not $MODE" >&2; exit 1 ;;
 esac
 REPO="$(cd "$REPO" && pwd)"
+# Both paths are compiled into the app, so a relative one bakes in a path that is
+# meaningless from wherever the app later runs.
+RUNTIME="$(cd "$RUNTIME" 2>/dev/null && pwd || echo "$RUNTIME")"
 # Two modes, two apps: a distinct bundle id keeps their preferences and menu bar
 # items apart, so an admin build and a reader build coexist without interfering.
 OUT="$HERE/build/$MODE"
