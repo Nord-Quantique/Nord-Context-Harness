@@ -333,6 +333,9 @@
         if (!m.html) return;
         if (stamp === null) { stamp = m.html; return; }
         if (m.html === stamp) return;
+        // Half-written feedback is worth more than a prompt refresh. stamp is not
+        // advanced here, so the next poll reloads as soon as the comment is closed.
+        if (document.querySelector('.cbox')) return;
         if (unsaved()) {
           if (!dirtyWarned) {
             dirtyWarned = true;
@@ -643,6 +646,7 @@
         drawTop();
       }).catch(function () { if (TOP) TOP.remove(); });
   }
+
 
   function boot() {
     if (!READER) document.documentElement.classList.add('__nqadmin');

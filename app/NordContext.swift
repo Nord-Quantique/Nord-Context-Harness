@@ -403,7 +403,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // check for content updates shortly after launch, then every five minutes
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.checkSync() }
-        syncTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+        // 30s, not 300: a fetch on a repository this size is one round trip, and
+        // waiting five minutes to notice a push is what made it look broken.
+        syncTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             self?.checkSync()
         }
 

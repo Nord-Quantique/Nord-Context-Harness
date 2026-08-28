@@ -232,6 +232,7 @@ class Handler(SimpleHTTPRequestHandler):
             return io.BytesIO(raw)
 
         """Inject the shim into HTML responses."""
+
         if self.path.split("?")[0] == "/_mode":
             return self._json({"ok": True, "mode": "reader" if READER else "admin",
                                "store": ROOT.name, "path": str(ROOT), "port": PORT_IN_USE})
